@@ -10819,279 +10819,279 @@ function Load_Folder_Callback(hObject, eventdata, handles)
                 end
             end
             files_names_dcm = dcm_temp;
-%             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%         
-%             h = msgbox({'Please wait ...','Reading Manufacturer Information'});
-%             info_dicom = dicominfo(files_names_dcm{1});
-%             close(h)
-%             if strcmp(info_dicom.Manufacturer,'SIEMENS')==1
-%                 images = zeros(info_dicom.Rows,info_dicom.Columns,length(files_names_dcm));
-%                 infoStr = cell(length(files_names_dcm),1);
-%                 info = cell(length(files_names_dcm),1);
-%                 NumberofCardiacPhases = info_dicom.CardiacNumberOfImages;
-%                 NumberofSlices = (length(files_names_dcm)/NumberofCardiacPhases)/4;
-%                 NumberofSeries = [];
-%                 NumberinSeries = [];
-%                 h = waitbar(0,['Reading ',num2str(0),' files of ',num2str(length(files_names_dcm)),' ...']);
-%                 steps = round(length(files_names_dcm)/50);
-%                 st = steps;
-%                 for k=1:length(files_names_dcm)
-%                     [infoStruct, dicInfoStruct, msg] = dicom_scan_singlefile(files_names_dcm{k});
-%                     infoStr{k} = infoStruct;
-%                     info{k} = dicInfoStruct;
-%                     NumberofSeries(k) = info{k}.SeriesNumber;
-%                     NumberinSeries(k) = infoStr{k}.image;
-%                     images(:,:,k) = dicom_read_singlefile(files_names_dcm{k});
-%                     if st==k 
-%                         waitbar(st/ length(files_names_dcm),h,['Reading ',num2str(st),' files of ',num2str(length(files_names_dcm)),' ...']);
-%                         st = st+steps;
-%                     end
-%                 end
-%                 serie1 = min(NumberofSeries);
-%                 serie2 = max(NumberofSeries);
-%                 NumberofImagesSerie1 = sum(NumberofSeries==serie1);
-%                 NumberofImagesSerie2 = sum(NumberofSeries==serie2);
-%                 if NumberofImagesSerie1>NumberofImagesSerie2
-%                     PhaseImagesID = serie1;
-%                     MagnitudeImagesID = serie2;
-%                 else
-%                     PhaseImagesID = serie2;
-%                     MagnitudeImagesID = serie1;
-%                 end
-%                 close(h)          
-%                 voxelsize = infoStr{1}.voxVc(1:3);
-%                 heart_rate = round(60/(info{1}.NominalInterval/1000));
-%                 phaseRange  = 4096;
-%                 if isfield(info{1},'ImageOrientationPatient')
-%                     read_vector  = info{1}.ImageOrientationPatient(1:3);
-%                     phase_vector = info{1}.ImageOrientationPatient(4:6);
-%                     slice_vector = cross(read_vector,phase_vector);
-%                     mainOrient   = find(abs(slice_vector) == max(abs(slice_vector)));
-%                     if mainOrient == 1
-%                         orientation = 'sag';
-%                     elseif mainOrient == 2
-%                         orientation = 'cor';
-%                     else
-%                         orientation = 'tra';
-%                     end
-%                 else
-%                     errStr =  sprintf('%s\n%s',errStr,'Field ''ImageOrientationPatient'' does not exist in dicomInfoStruct.');
-%                 end
-%                 if isfield(info{1},'Columns')&& isfield(info{end},'Rows')
-%                     imageSize = [info{1}.Rows,info{1}.Columns];
-%                 else
-%                     errStr =  sprintf('%s\n%s',errStr,'Field ''Columns & Rows'' does not exist in dicomInfoStruct.');
-%                 end
-%                 if isfield(info{1},'PhaseEncodingDirection')
-%                     if strcmp(info{1}.PhaseEncodingDirection,'ROW')
-%                         peDir = 'i';
-%                     else
-%                         peDir = 'j';
-%                     end
-%                 else
-%                     errStr =  sprintf('%s\n%s',errStr,'Field ''PhaseEncodingDirection'' does not exist in dicomInfoStruct.');
-%                 end
-%                 if ~isempty(strfind(info{1}.SoftwareVersions,'VB13')) || ~isempty(strfind(info{1}.SoftwareVersions,'B15')) || ~isempty(strfind(info{1}.SoftwareVersions,'B17'))
-%                    swVersion = 'VB13';
-%                 elseif ~isempty(strfind(info{1}.SoftwareVersions,'VA25'))
-%                    swVersion = 'VA25';
-%                 elseif ~isempty(strfind(info{1}.SoftwareVersions,'VB12'))
-%                    swVersion = 'VB12';
-%                 else
-%                    swVersion = 'VB13';
-%                 end
-%                 if (~strcmp(swVersion,'VB12') && ~strcmp(swVersion,'VA25'))
-%                    if strcmp(orientation,'sag')
-%                        if strcmp(peDir,'i')
-%                            signVijk(1)= -1;
-%                            signVijk(2)= -1;
-%                            signVijk(3)= -1;
-%                        else
-%                            signVijk(1)= -1;
-%                            signVijk(2)=  1;
-%                            signVijk(3)= -1;
-%                        end
-%                    elseif strcmp(orientation,'cor')
-%                        if strcmp(peDir,'i')
-%                            signVijk(1)= -1;
-%                            signVijk(2)=  1;
-%                            signVijk(3)= -1;
-%                        else
-%                            signVijk(1)= -1;
-%                            signVijk(2)= -1;
-%                            signVijk(3)= -1;
-%                        end
-%                    elseif strcmp(orientation,'tra')
-%                        if strcmp(peDir,'i')
-%                            signVijk(1)= -1;
-%                            signVijk(2)=  1;
-%                            signVijk(3)= -1;
-%                        else
-%                            signVijk(1)=  1;
-%                            signVijk(2)=  1;
-%                            signVijk(3)= -1;
-%                        end
-%                    end
-%                 else
-%                    signVijk(1)= 1;
-%                    signVijk(2)= 1;
-%                    signVijk(3)= 1;
-%                 end
-%                 if isfield (info{1},'Private_0029_1020')
-%                     tempStr = lower(info{1}.Private_0029_1020);
-%                     if strcmp(swVersion,'VB13')
-%                         posVencInplane    = strfind(tempStr,lower('sWiPMemBlock.adFree[8]'));
-%                         posVencThplane    = strfind(tempStr,lower('sWiPMemBlock.adFree[9]'));
-%                         posVencNextField  = strfind(tempStr,lower('sWiPMemBlock.adFree[10]'));
-%                     elseif (strcmp(swVersion,'VB12')||strcmp(swVersion,'VA25'))
-%                         posVencInplane    = strfind(tempStr,lower('sWiPMemBlock.adFree[9]'));
-%                         posVencThplane    = strfind(tempStr,lower('sWiPMemBlock.adFree[10]'));
-%                         posVencNextField  = strfind(tempStr,lower('sWiPMemBlock.adFree[11]'));
-%                     else
-%                         posVencInplane    = [];
-%                         posVencThplane    = [];
-%                         posVencNextField  = [];
-%                     end
-%                     if ~isempty(posVencInplane) && ~isempty(posVencThplane) && ~isempty(posVencNextField)
-%                         tempStr = tempStr(posVencInplane:posVencNextField-1);
-%                         pos_eq = strfind(tempStr,'=');
-%                         [~, idx] = regexp(tempStr, '\n', 'match', 'start');
-%                         vencInPlane = str2double(tempStr(pos_eq(1)+1:idx(1)-1));
-%                         vencThPlane = str2double(tempStr(pos_eq(2)+1:idx(2)-1));
-%                     else
-%                         vencInPlane = 1.5;
-%                         vencThPlane = 1.5;
-%                     end
-%                 end
-%                 if vencInPlane == vencThPlane
-%                     VENC = vencInPlane;
-%                 else
-%                     msgbox('The VENC need to be the same in in-plane and th-plane ...','Warning','warn')
-%                 end
-%                 images_n = double(images);
-%                 for k=1:size(images_n,3)
-%                     if NumberofSeries(k)==PhaseImagesID
-%                         images_n(:,:,k) = ((images(:,:,k)*info{k}.RescaleSlope + info{k}.RescaleIntercept)/phaseRange)*VENC*100;
-%                     else
-%                         images_n(:,:,k) = images(:,:,k);
-%                     end
-%                 end
-%                 phase_sort = NumberinSeries(NumberofSeries==PhaseImagesID);
-%                 magnitude_sort = NumberinSeries(NumberofSeries==MagnitudeImagesID);
-%                 PHASE = images_n(:,:,NumberofSeries==PhaseImagesID);
-%                 MAGNITUDE = images_n(:,:,NumberofSeries==MagnitudeImagesID);
-%                 PHASE = PHASE(:,:,phase_sort);
-%                 MAGNITUDE = MAGNITUDE(:,:,magnitude_sort);
-%                 handles.MR_PCA_FH = flip(permute(reshape(PHASE(:,:,1:NumberofSlices*NumberofCardiacPhases),[size(PHASE,1) size(PHASE,2) NumberofSlices NumberofCardiacPhases]),[2,1,3,4])*-1,3);
-%                 handles.MR_PCA_AP = flip(permute(reshape(PHASE(:,:,(NumberofSlices*NumberofCardiacPhases)+1:(NumberofSlices*NumberofCardiacPhases)*2),[size(PHASE,1) size(PHASE,2) NumberofSlices NumberofCardiacPhases]),[2,1,3,4])*-1,3);
-%                 handles.MR_PCA_RL = flip(permute(reshape(PHASE(:,:,((NumberofSlices*NumberofCardiacPhases)*2)+1:(NumberofSlices*NumberofCardiacPhases)*3),[size(PHASE,1) size(PHASE,2) NumberofSlices NumberofCardiacPhases]),[2,1,3,4]),3);
-%                 handles.MR_FFE = flip(permute(reshape(MAGNITUDE,[size(PHASE,1) size(PHASE,2) NumberofSlices NumberofCardiacPhases]),[2,1,3,4]),3);
-%                 handles.VENC = VENC*100;
-%                 handles.voxel_MR = voxelsize;
-%                 handles.heart_rate = heart_rate;
-% 
-%                 id_empty = double([isempty(handles.MR_FFE_FH),isempty(handles.MR_FFE_AP),isempty(handles.MR_FFE_RL)]);
-%                 if sum(id_empty)>0
-%                     [r,c,v] = find(id_empty==0);
-%                     if c(1)==1
-%                         handles.MR_FFE_FH = handles.MR_FFE_FH;
-%                         handles.MR_FFE_AP = handles.MR_FFE_FH;
-%                         handles.MR_FFE_RL = handles.MR_FFE_FH;
-%                     elseif c(1)==2
-%                         handles.MR_FFE_FH = handles.MR_FFE_AP;
-%                         handles.MR_FFE_AP = handles.MR_FFE_AP;
-%                         handles.MR_FFE_RL = handles.MR_FFE_AP;
-%                     elseif c(1)==3
-%                         handles.MR_FFE_FH = handles.MR_FFE_RL;
-%                         handles.MR_FFE_AP = handles.MR_FFE_RL;
-%                         handles.MR_FFE_RL = handles.MR_FFE_RL;
-% 
-%                     end
-%                 end
-%                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                 % load data offset error JSOTELO
-%                 handles.type = 'DCM';
-%                 input.VENC = handles.VENC;
-%                 input.voxel_MR = handles.voxel_MR;
-%                 input.heart_rate = handles.heart_rate;
-%                 input.type = handles.type;
-%                 input.MR_FFE_FH = handles.MR_FFE_FH;
-%                 input.MR_FFE_AP = handles.MR_FFE_AP;
-%                 input.MR_FFE_RL = handles.MR_FFE_RL;
-%                 input.MR_PCA_FH = handles.MR_PCA_FH;
-%                 input.MR_PCA_AP = handles.MR_PCA_AP;
-%                 input.MR_PCA_RL = handles.MR_PCA_RL;
-%                 input.id = 0;
-%                 input.id_while = 0;        
-%                 id_while = 0;
-%                 while(1)
-%                     while(id_while == 0)
-%                         OFFSET_ERR_AND_NOISE_MASKING(input)
-%                         input.VENC = getappdata(0,'VENC');
-%                         input.voxel_MR = getappdata(0,'voxel_MR');
-%                         input.heart_rate = getappdata(0,'heart_rate');
-%                         input.type = getappdata(0,'type');
-%                         input.MR_FFE_FH = getappdata(0,'MR_FFE_FH');
-%                         input.MR_FFE_AP = getappdata(0,'MR_FFE_AP');
-%                         input.MR_FFE_RL = getappdata(0,'MR_FFE_RL');
-%                         input.MR_PCA_FH = getappdata(0,'MR_PCA_FH');
-%                         input.MR_PCA_AP = getappdata(0,'MR_PCA_AP');
-%                         input.MR_PCA_RL = getappdata(0,'MR_PCA_RL');
-%                         input.id = getappdata(0,'id');
-%                         id_while = getappdata(0,'id_while');
-%                     end
-%                     handles.VENC = getappdata(0,'VENC');
-%                     handles.voxel_MR = getappdata(0,'voxel_MR');
-%                     handles.heart_rate = getappdata(0,'heart_rate');
-%                     handles.type = getappdata(0,'type');
-%                     handles.MR_FFE_FH = getappdata(0,'MR_FFE_FH');
-%                     handles.MR_FFE_AP = getappdata(0,'MR_FFE_AP');
-%                     handles.MR_FFE_RL = getappdata(0,'MR_FFE_RL');
-%                     handles.MR_PCA_FH = getappdata(0,'MR_PCA_FH');
-%                     handles.MR_PCA_AP = getappdata(0,'MR_PCA_AP');
-%                     handles.MR_PCA_RL = getappdata(0,'MR_PCA_RL');
-%                     break
-%                 end
-%                 % load data offset error JSOTELO
-%                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                 [a,b,c,d] = size(handles.MR_FFE);
-%                 handles.a = a;
-%                 handles.b = b;
-%                 handles.c = c;
-%                 handles.d = d;
-%                 MR_FFE_FH_n = zeros(handles.a+2,handles.b+2,handles.c+2,handles.d);
-%                 MR_FFE_AP_n = zeros(handles.a+2,handles.b+2,handles.c+2,handles.d);
-%                 MR_FFE_RL_n = zeros(handles.a+2,handles.b+2,handles.c+2,handles.d);
-%                 MR_PCA_FH_n = zeros(handles.a+2,handles.b+2,handles.c+2,handles.d);
-%                 MR_PCA_AP_n = zeros(handles.a+2,handles.b+2,handles.c+2,handles.d);
-%                 MR_PCA_RL_n = zeros(handles.a+2,handles.b+2,handles.c+2,handles.d);
-%                 MR_FFE_FH_n(2:end-1,2:end-1,2:end-1,:)  = handles.MR_FFE;
-%                 MR_FFE_AP_n(2:end-1,2:end-1,2:end-1,:)  = handles.MR_FFE;
-%                 MR_FFE_RL_n(2:end-1,2:end-1,2:end-1,:)  = handles.MR_FFE;
-%                 MR_PCA_FH_n(2:end-1,2:end-1,2:end-1,:)  = handles.MR_PCA_FH;
-%                 MR_PCA_AP_n(2:end-1,2:end-1,2:end-1,:)  = handles.MR_PCA_AP;
-%                 MR_PCA_RL_n(2:end-1,2:end-1,2:end-1,:)  = handles.MR_PCA_RL;
-%                 handles.MR_FFE_FH   = MR_FFE_FH_n;
-%                 handles.MR_FFE_AP   = MR_FFE_AP_n;
-%                 handles.MR_FFE_RL   = MR_FFE_RL_n;
-%                 handles.MR_PCA_FH   = MR_PCA_FH_n;
-%                 handles.MR_PCA_AP   = MR_PCA_AP_n;
-%                 handles.MR_PCA_RL   = MR_PCA_RL_n;
-%                 [a,b,c,d] = size(handles.MR_FFE_FH);
-%                 handles.a = a;
-%                 handles.b = b;
-%                 handles.c = c;
-%                 handles.d = d;
-%                 handles.IPCMRA = (1/d)*sum( (handles.MR_FFE_FH.^2).*(handles.MR_PCA_FH.^2 + handles.MR_PCA_AP.^2 + handles.MR_PCA_RL.^2),4);
-%                 handles.IPCMRA = (handles.IPCMRA/max(handles.IPCMRA(:)))*255;
-%                 
-% % %             elseif strcmp(info_dicom.Manufacturer,'Philips Medical Systems')==1
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
+            h = msgbox({'Please wait ...','Reading Manufacturer Information'});
+            info_dicom = dicominfo(files_names_dcm{1});
+            close(h)
+            if strcmp(info_dicom.Manufacturer,'SIEMENS')==1
+                images = zeros(info_dicom.Rows,info_dicom.Columns,length(files_names_dcm));
+                infoStr = cell(length(files_names_dcm),1);
+                info = cell(length(files_names_dcm),1);
+                NumberofCardiacPhases = info_dicom.CardiacNumberOfImages;
+                NumberofSlices = (length(files_names_dcm)/NumberofCardiacPhases)/4;
+                NumberofSeries = [];
+                NumberinSeries = [];
+                h = waitbar(0,['Reading ',num2str(0),' files of ',num2str(length(files_names_dcm)),' ...']);
+                steps = round(length(files_names_dcm)/50);
+                st = steps;
+                for k=1:length(files_names_dcm)
+                    [infoStruct, dicInfoStruct, msg] = dicom_scan_singlefile(files_names_dcm{k});
+                    infoStr{k} = infoStruct;
+                    info{k} = dicInfoStruct;
+                    NumberofSeries(k) = info{k}.SeriesNumber;
+                    NumberinSeries(k) = infoStr{k}.image;
+                    images(:,:,k) = dicom_read_singlefile(files_names_dcm{k});
+                    if st==k 
+                        waitbar(st/ length(files_names_dcm),h,['Reading ',num2str(st),' files of ',num2str(length(files_names_dcm)),' ...']);
+                        st = st+steps;
+                    end
+                end
+                serie1 = min(NumberofSeries);
+                serie2 = max(NumberofSeries);
+                NumberofImagesSerie1 = sum(NumberofSeries==serie1);
+                NumberofImagesSerie2 = sum(NumberofSeries==serie2);
+                if NumberofImagesSerie1>NumberofImagesSerie2
+                    PhaseImagesID = serie1;
+                    MagnitudeImagesID = serie2;
+                else
+                    PhaseImagesID = serie2;
+                    MagnitudeImagesID = serie1;
+                end
+                close(h)          
+                voxelsize = infoStr{1}.voxVc(1:3);
+                heart_rate = round(60/(info{1}.NominalInterval/1000));
+                phaseRange  = 4096;
+                if isfield(info{1},'ImageOrientationPatient')
+                    read_vector  = info{1}.ImageOrientationPatient(1:3);
+                    phase_vector = info{1}.ImageOrientationPatient(4:6);
+                    slice_vector = cross(read_vector,phase_vector);
+                    mainOrient   = find(abs(slice_vector) == max(abs(slice_vector)));
+                    if mainOrient == 1
+                        orientation = 'sag';
+                    elseif mainOrient == 2
+                        orientation = 'cor';
+                    else
+                        orientation = 'tra';
+                    end
+                else
+                    errStr =  sprintf('%s\n%s',errStr,'Field ''ImageOrientationPatient'' does not exist in dicomInfoStruct.');
+                end
+                if isfield(info{1},'Columns')&& isfield(info{end},'Rows')
+                    imageSize = [info{1}.Rows,info{1}.Columns];
+                else
+                    errStr =  sprintf('%s\n%s',errStr,'Field ''Columns & Rows'' does not exist in dicomInfoStruct.');
+                end
+                if isfield(info{1},'PhaseEncodingDirection')
+                    if strcmp(info{1}.PhaseEncodingDirection,'ROW')
+                        peDir = 'i';
+                    else
+                        peDir = 'j';
+                    end
+                else
+                    errStr =  sprintf('%s\n%s',errStr,'Field ''PhaseEncodingDirection'' does not exist in dicomInfoStruct.');
+                end
+                if ~isempty(strfind(info{1}.SoftwareVersions,'VB13')) || ~isempty(strfind(info{1}.SoftwareVersions,'B15')) || ~isempty(strfind(info{1}.SoftwareVersions,'B17'))
+                   swVersion = 'VB13';
+                elseif ~isempty(strfind(info{1}.SoftwareVersions,'VA25'))
+                   swVersion = 'VA25';
+                elseif ~isempty(strfind(info{1}.SoftwareVersions,'VB12'))
+                   swVersion = 'VB12';
+                else
+                   swVersion = 'VB13';
+                end
+                if (~strcmp(swVersion,'VB12') && ~strcmp(swVersion,'VA25'))
+                   if strcmp(orientation,'sag')
+                       if strcmp(peDir,'i')
+                           signVijk(1)= -1;
+                           signVijk(2)= -1;
+                           signVijk(3)= -1;
+                       else
+                           signVijk(1)= -1;
+                           signVijk(2)=  1;
+                           signVijk(3)= -1;
+                       end
+                   elseif strcmp(orientation,'cor')
+                       if strcmp(peDir,'i')
+                           signVijk(1)= -1;
+                           signVijk(2)=  1;
+                           signVijk(3)= -1;
+                       else
+                           signVijk(1)= -1;
+                           signVijk(2)= -1;
+                           signVijk(3)= -1;
+                       end
+                   elseif strcmp(orientation,'tra')
+                       if strcmp(peDir,'i')
+                           signVijk(1)= -1;
+                           signVijk(2)=  1;
+                           signVijk(3)= -1;
+                       else
+                           signVijk(1)=  1;
+                           signVijk(2)=  1;
+                           signVijk(3)= -1;
+                       end
+                   end
+                else
+                   signVijk(1)= 1;
+                   signVijk(2)= 1;
+                   signVijk(3)= 1;
+                end
+                if isfield (info{1},'Private_0029_1020')
+                    tempStr = lower(info{1}.Private_0029_1020);
+                    if strcmp(swVersion,'VB13')
+                        posVencInplane    = strfind(tempStr,lower('sWiPMemBlock.adFree[8]'));
+                        posVencThplane    = strfind(tempStr,lower('sWiPMemBlock.adFree[9]'));
+                        posVencNextField  = strfind(tempStr,lower('sWiPMemBlock.adFree[10]'));
+                    elseif (strcmp(swVersion,'VB12')||strcmp(swVersion,'VA25'))
+                        posVencInplane    = strfind(tempStr,lower('sWiPMemBlock.adFree[9]'));
+                        posVencThplane    = strfind(tempStr,lower('sWiPMemBlock.adFree[10]'));
+                        posVencNextField  = strfind(tempStr,lower('sWiPMemBlock.adFree[11]'));
+                    else
+                        posVencInplane    = [];
+                        posVencThplane    = [];
+                        posVencNextField  = [];
+                    end
+                    if ~isempty(posVencInplane) && ~isempty(posVencThplane) && ~isempty(posVencNextField)
+                        tempStr = tempStr(posVencInplane:posVencNextField-1);
+                        pos_eq = strfind(tempStr,'=');
+                        [~, idx] = regexp(tempStr, '\n', 'match', 'start');
+                        vencInPlane = str2double(tempStr(pos_eq(1)+1:idx(1)-1));
+                        vencThPlane = str2double(tempStr(pos_eq(2)+1:idx(2)-1));
+                    else
+                        vencInPlane = 1.5;
+                        vencThPlane = 1.5;
+                    end
+                end
+                if vencInPlane == vencThPlane
+                    VENC = vencInPlane;
+                else
+                    msgbox('The VENC need to be the same in in-plane and th-plane ...','Warning','warn')
+                end
+                images_n = double(images);
+                for k=1:size(images_n,3)
+                    if NumberofSeries(k)==PhaseImagesID
+                        images_n(:,:,k) = ((images(:,:,k)*info{k}.RescaleSlope + info{k}.RescaleIntercept)/phaseRange)*VENC*100;
+                    else
+                        images_n(:,:,k) = images(:,:,k);
+                    end
+                end
+                phase_sort = NumberinSeries(NumberofSeries==PhaseImagesID);
+                magnitude_sort = NumberinSeries(NumberofSeries==MagnitudeImagesID);
+                PHASE = images_n(:,:,NumberofSeries==PhaseImagesID);
+                MAGNITUDE = images_n(:,:,NumberofSeries==MagnitudeImagesID);
+                PHASE = PHASE(:,:,phase_sort);
+                MAGNITUDE = MAGNITUDE(:,:,magnitude_sort);
+                handles.MR_PCA_FH = flip(permute(reshape(PHASE(:,:,1:NumberofSlices*NumberofCardiacPhases),[size(PHASE,1) size(PHASE,2) NumberofSlices NumberofCardiacPhases]),[2,1,3,4])*-1,3);
+                handles.MR_PCA_AP = flip(permute(reshape(PHASE(:,:,(NumberofSlices*NumberofCardiacPhases)+1:(NumberofSlices*NumberofCardiacPhases)*2),[size(PHASE,1) size(PHASE,2) NumberofSlices NumberofCardiacPhases]),[2,1,3,4])*-1,3);
+                handles.MR_PCA_RL = flip(permute(reshape(PHASE(:,:,((NumberofSlices*NumberofCardiacPhases)*2)+1:(NumberofSlices*NumberofCardiacPhases)*3),[size(PHASE,1) size(PHASE,2) NumberofSlices NumberofCardiacPhases]),[2,1,3,4]),3);
+                handles.MR_FFE = flip(permute(reshape(MAGNITUDE,[size(PHASE,1) size(PHASE,2) NumberofSlices NumberofCardiacPhases]),[2,1,3,4]),3);
+                handles.VENC = VENC*100;
+                handles.voxel_MR = voxelsize;
+                handles.heart_rate = heart_rate;
 
-            if strcmp(info_dicom.Manufacturer,'Philips')==1       
+                id_empty = double([isempty(handles.MR_FFE_FH),isempty(handles.MR_FFE_AP),isempty(handles.MR_FFE_RL)]);
+                if sum(id_empty)>0
+                    [r,c,v] = find(id_empty==0);
+                    if c(1)==1
+                        handles.MR_FFE_FH = handles.MR_FFE_FH;
+                        handles.MR_FFE_AP = handles.MR_FFE_FH;
+                        handles.MR_FFE_RL = handles.MR_FFE_FH;
+                    elseif c(1)==2
+                        handles.MR_FFE_FH = handles.MR_FFE_AP;
+                        handles.MR_FFE_AP = handles.MR_FFE_AP;
+                        handles.MR_FFE_RL = handles.MR_FFE_AP;
+                    elseif c(1)==3
+                        handles.MR_FFE_FH = handles.MR_FFE_RL;
+                        handles.MR_FFE_AP = handles.MR_FFE_RL;
+                        handles.MR_FFE_RL = handles.MR_FFE_RL;
+
+                    end
+                end
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                % load data offset error JSOTELO
+                handles.type = 'DCM';
+                input.VENC = handles.VENC;
+                input.voxel_MR = handles.voxel_MR;
+                input.heart_rate = handles.heart_rate;
+                input.type = handles.type;
+                input.MR_FFE_FH = handles.MR_FFE_FH;
+                input.MR_FFE_AP = handles.MR_FFE_AP;
+                input.MR_FFE_RL = handles.MR_FFE_RL;
+                input.MR_PCA_FH = handles.MR_PCA_FH;
+                input.MR_PCA_AP = handles.MR_PCA_AP;
+                input.MR_PCA_RL = handles.MR_PCA_RL;
+                input.id = 0;
+                input.id_while = 0;        
+                id_while = 0;
+                while(1)
+                    while(id_while == 0)
+                        OFFSET_ERR_AND_NOISE_MASKING(input)
+                        input.VENC = getappdata(0,'VENC');
+                        input.voxel_MR = getappdata(0,'voxel_MR');
+                        input.heart_rate = getappdata(0,'heart_rate');
+                        input.type = getappdata(0,'type');
+                        input.MR_FFE_FH = getappdata(0,'MR_FFE_FH');
+                        input.MR_FFE_AP = getappdata(0,'MR_FFE_AP');
+                        input.MR_FFE_RL = getappdata(0,'MR_FFE_RL');
+                        input.MR_PCA_FH = getappdata(0,'MR_PCA_FH');
+                        input.MR_PCA_AP = getappdata(0,'MR_PCA_AP');
+                        input.MR_PCA_RL = getappdata(0,'MR_PCA_RL');
+                        input.id = getappdata(0,'id');
+                        id_while = getappdata(0,'id_while');
+                    end
+                    handles.VENC = getappdata(0,'VENC');
+                    handles.voxel_MR = getappdata(0,'voxel_MR');
+                    handles.heart_rate = getappdata(0,'heart_rate');
+                    handles.type = getappdata(0,'type');
+                    handles.MR_FFE_FH = getappdata(0,'MR_FFE_FH');
+                    handles.MR_FFE_AP = getappdata(0,'MR_FFE_AP');
+                    handles.MR_FFE_RL = getappdata(0,'MR_FFE_RL');
+                    handles.MR_PCA_FH = getappdata(0,'MR_PCA_FH');
+                    handles.MR_PCA_AP = getappdata(0,'MR_PCA_AP');
+                    handles.MR_PCA_RL = getappdata(0,'MR_PCA_RL');
+                    break
+                end
+                % load data offset error JSOTELO
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                [a,b,c,d] = size(handles.MR_FFE);
+                handles.a = a;
+                handles.b = b;
+                handles.c = c;
+                handles.d = d;
+                MR_FFE_FH_n = zeros(handles.a+2,handles.b+2,handles.c+2,handles.d);
+                MR_FFE_AP_n = zeros(handles.a+2,handles.b+2,handles.c+2,handles.d);
+                MR_FFE_RL_n = zeros(handles.a+2,handles.b+2,handles.c+2,handles.d);
+                MR_PCA_FH_n = zeros(handles.a+2,handles.b+2,handles.c+2,handles.d);
+                MR_PCA_AP_n = zeros(handles.a+2,handles.b+2,handles.c+2,handles.d);
+                MR_PCA_RL_n = zeros(handles.a+2,handles.b+2,handles.c+2,handles.d);
+                MR_FFE_FH_n(2:end-1,2:end-1,2:end-1,:)  = handles.MR_FFE;
+                MR_FFE_AP_n(2:end-1,2:end-1,2:end-1,:)  = handles.MR_FFE;
+                MR_FFE_RL_n(2:end-1,2:end-1,2:end-1,:)  = handles.MR_FFE;
+                MR_PCA_FH_n(2:end-1,2:end-1,2:end-1,:)  = handles.MR_PCA_FH;
+                MR_PCA_AP_n(2:end-1,2:end-1,2:end-1,:)  = handles.MR_PCA_AP;
+                MR_PCA_RL_n(2:end-1,2:end-1,2:end-1,:)  = handles.MR_PCA_RL;
+                handles.MR_FFE_FH   = MR_FFE_FH_n;
+                handles.MR_FFE_AP   = MR_FFE_AP_n;
+                handles.MR_FFE_RL   = MR_FFE_RL_n;
+                handles.MR_PCA_FH   = MR_PCA_FH_n;
+                handles.MR_PCA_AP   = MR_PCA_AP_n;
+                handles.MR_PCA_RL   = MR_PCA_RL_n;
+                [a,b,c,d] = size(handles.MR_FFE_FH);
+                handles.a = a;
+                handles.b = b;
+                handles.c = c;
+                handles.d = d;
+                handles.IPCMRA = (1/d)*sum( (handles.MR_FFE_FH.^2).*(handles.MR_PCA_FH.^2 + handles.MR_PCA_AP.^2 + handles.MR_PCA_RL.^2),4);
+                handles.IPCMRA = (handles.IPCMRA/max(handles.IPCMRA(:)))*255;
+                
+              elseif strcmp(info_dicom.Manufacturer,'Philips Medical Systems')==1
+
+%             if strcmp(info_dicom.Manufacturer,'Philips')==1       
                 h = waitbar(0,['Reading ',num2str(0),' files of ',num2str(length(files_names_dcm)),' ...']);
                 steps = round(length(files_names_dcm)/50);
                 st = steps;
